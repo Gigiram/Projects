@@ -1,0 +1,536 @@
+USE [DM_Talent]
+GO
+/****** Object:  StoredProcedure [dbo].[Report_DXC_Workday-Recruiting_All_Requisitions_sp]    Script Date: 5/20/2021 1:43:59 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+--Usage of parameters: 
+-- 1 - run Pit Extract
+-- 2 - WDR ALL Req
+
+ALTER PROCEDURE [dbo].[Report_DXC_Workday-Recruiting_All_Requisitions_sp] @mode int = 1
+WITH EXEC AS CALLER
+AS
+-- =========================================================================================================================================
+-- Author:		Marek Miasik
+-- Create date: 2020-03-19
+-- Description:	data Source for SSAS Daily Ever Green UDM
+-- ChangeDate		ChangeBy		ChangeDesc
+-- 17 Sep 2020		Manoj			Added Special Project
+-- 22 Sep 2020		Manoj			Removed duplicate rows for employee from Time tracking details
+--									Consider the same client used in Requisition
+-- 08 Oct 2020		Manoj			Added PPM Position Status, WMA Req Position Reason , 
+--                                  Inbound_Staffing_Process_Completed - Value masked for Terminated Employees 
+-- 12 Feb 2021		Manoj			Added HM_L2_Mngr_OrgCode, HM_L3_Mngr_OrgCode, HM_L4_Mngr_OrgCode, HM_L5_Mngr_OrgCode, HM_L6_Mngr_OrgCode,
+--                                        HM_L2_Mngr_Email, HM_L3_Mngr_Email, HM_L4_Mngr_Email,HM_L5_Mngr_Email, HM_L6_Mngr_Email
+-- 31 Mar 2021		Manoj			Added MigrationId
+-- ==========================================================================================================================================
+BEGIN
+-- SET NOCOUNT ON added to prevent extra result sets from
+-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+	DECLARE @l_max_pit_date_d date = (SELECT max([pit_date]) FROM [BIC_GoldSource].[dbo].[V_WDR_PIT])
+
+	DECLARE @l_max_activity_month_d date = (SELECT max([Activity Month]) FROM [DM_TimeTracking].[dbo].[V_DXC_TimeTracking_Client_Category])
+
+		SELECT
+			 tt.Employee
+			,tt.[Client ID]
+			,tt.[Client Name]
+			,tt.[Activity Month]
+			,row_number() OVER (partition by employee , [client ID] ORDER By employee asc) as Rno
+		INTO #timetracking
+		FROM [DM_TimeTracking].[dbo].[V_DXC_TimeTracking_Client_Category] tt
+		WHERE tt.[Activity Month] = @l_max_activity_month_d
+
+		CREATE INDEX ix_EmpID ON #timetracking(Employee,[Client Name],Rno)
+
+	IF @mode = 1
+		
+		
+
+
+		SELECT cur.[Report_Date],
+			   cur.[pit_date],
+			   cur.[is_weekly],
+			   cur.[is_monthly],
+			   cur.[Requisition_Number],
+			   cur.[Demand_ID],
+			   cur.[Req_Offer_Status],
+			   cur.[Requisition_Title],
+			   cur.[Job_Profile],
+			   cur.[Requisition_Status],
+			   cur.[Req_Posting],
+			   cur.[Region],
+			   cur.[Country],
+			   cur.[State_Province],
+			   cur.[City],
+			   cur.[Secondary_Locations],
+			   cur.[Business_Group_L1],
+			   cur.[Business_Unit_L2],
+			   cur.[Business_L3_OrgUnit],
+			   cur.[Business_L4_MRU],
+			   cur.[Cost_Center],
+			   cur.[SCS_Code],
+			   cur.[Position_Cost_Center],
+			   cur.[Position_Cost_Center_Name],
+			   cur.[Company_Name],
+			   cur.[Company_ID],
+			   cur.[Job_Code],
+			   cur.[Job_Family_Group],
+			   cur.[Job_Family],
+			   cur.[Management_Level],
+			   cur.[Job_Grade],
+			   cur.[Reason_Position_Needed],
+			   cur.[Replaced_Worker_EID],
+			   cur.[Replaced_Worker_Name],
+			   cur.[Position_ID],
+			   cur.[Position_Status],
+			   cur.[Position_Worker_Type],
+			   cur.[Worker_Sub_Type_Hiring_Requirement],
+			   cur.[Overtime_Status],
+			   cur.[Primary_Recruiter_Name],
+			   cur.[Recruiter_EID],
+			   cur.[Recruiter_Email],
+			   cur.[Hiring_Manager],
+			   cur.[Hiring_Manager_EID],
+			   cur.[Hiring_Manager_Email],
+			   cur.[Hiring_Manager_Supervisor_Name],
+			   cur.[HM_L1_Mngr_Name],
+			   cur.[HM_L2_Mngr_Name],
+			   cur.[HM_L3_Mngr_Name],
+			   cur.[HM_L4_Mngr_Name],
+			   cur.[HM_L5_Mngr_Name],
+			   cur.[HM_L6_Mngr_Name],
+			   cur.[Req_Creation_Date],
+			   cur.[Req_Approved_Date],
+			   cur.[Req_Posting_Date],
+			   cur.[Req_Latest_Reactivation_Date],
+			   cur.[Target_Start_Date],
+			   cur.[Days_Job_Req_Open_by_Date_Req_Entered],
+			   cur.[First_Sourced_Date],
+			   cur.[Days_Job_Req_Open_by_Recruiting_Start_Date],
+			   cur.[On_Hold_Date],
+			   cur.[On_Hold_Days],
+			   cur.[Days_Job_Req_Open_by_Req_Completed_Date],
+			   cur.[Referral_Payment_Plan_Job_Req],
+			   cur.[Number_Openings_Total],
+			   cur.[Number_Openings_Left_to_Fill],
+			   cur.[Number_External_Candidates],
+			   cur.[Number_Internal_Candidates],
+			   cur.[Number_Candidates_Matched],
+			   cur.[Number_Candidates_Shortlisted],
+			   cur.[Number_Candidates_Interviewed],
+			   cur.[Number_Candidates_Offered],
+			   cur.[Number_Candidates_Accepted],
+			   cur.[Number_External_Candidates_ALL],
+			   cur.[Number_Internal_Candidates_ALL],
+			   cur.[Number_Candidates_Matched_ALL],
+			   cur.[Number_Candidates_Shortlisted_ALL],
+			   cur.[Number_Candidates_Interviewed_ALL],
+			   cur.[Number_Candidates_Offered_ALL],
+			   cur.[Number_Candidates_Accepted_ALL],
+			   cur.[Number_Candidates_Declined_Rejected_ALL],
+			   cur.[Latest_Filled_Date],
+			   cur.[Labor_Category],
+			   cur.[reasonDetail],
+			   cur.[Latest_Cancellation_Date],
+			   cur.[Recruiter_Type],
+			   cur.[Employee_ID],
+			   cur.[Rev_Region_L1],
+			   cur.[Rev_Region_L2],
+			   cur.[Rev_Region_L3],
+			   cur.[BSDHI_L1],
+			   cur.[BSDHI_L2],
+			   cur.[BSDHI_L3],
+			   cur.[wma_id],
+			   cur.[Last_Name],
+			   cur.[First_Name],
+			   cur.[Wrkr_Hire_Date],
+			   cur.[Age],
+			   cur.[Age Group],
+			   cur.[eidToken],
+			   cur.[Candidate_ID],
+			   cur.[Billable_NonBillable],
+			   cur.[req_Job_Type],
+			   cur.[Target_Hire_Date_Proposed],
+			   cur.[Revised_Target_Hire_Date_Proposed],
+			   cur.[Req_Legacy_Company],
+			   cur.[job_level],
+			   cur.[Client_Project_Name],
+			   cur.[Official_Account_Name],
+			   cur.[offering],
+			   cur.[SubOffering],
+			   cur.[Digital/Non Digital (McKinsey Mapping)],
+			   cur.[Industry],
+			   cur.[country_cd],
+			   cur.[Candidate_Is_Internal],
+			   cur.[Submission_Is_Internal],
+			   cur.[Source],
+			   cur.[Job_Application_Source],
+			   cur.[Candidate_Source],
+			   cur.[Referred_by],
+			   cur.[Screen_Date],
+			   cur.[Hiring_Manager_Submittal_Date],
+			   cur.[Interview_Date],
+			   cur.[Offer_Approval_Date],
+			   cur.[Offer_Extended_date],
+			   cur.[Offer_Accepted_Date],
+			   cur.[Latest_Offer_Accepted],
+			   cur.[Latest_Offer_Extended],
+			   CASE WHEN cur_non.Employee_Status = 'Terminated' THEN '[masked]'
+			        ELSE   cur.[Inbound_Staffing_Process_Completed]
+			   END as [Inbound_Staffing_Process_Completed],
+			   cur.[latest_Internal_job_posting_Start_date],
+			   cur.[latest_Internal_job_posting_End_date],
+			   cur.[latest_External_job_posting_Start_date],
+			   cur.[latest_External_job_posting_End_date],
+			   wma2.[req_status],
+			   tt.[Client ID],
+			   tt.[Client Name],
+			   cur.[Country Group],
+			   spc.[Special Project],
+			   wma.req_position_reason as [WMA Req Position Reason],
+			   pos.POSITION_STATUS as [PPM Position Status],
+			   ncur.OrgUnit2_Code as [M_L2_Mngr_OrgCode],
+			   ncur.OrgUnit3_Code as [HM_L3_Mngr_OrgCode],
+			   ncur.OrgUnit4_Code as [HM_L4_Mngr_OrgCode],
+			   ncur.OrgUnit5_Code as [HM_L5_Mngr_OrgCode],
+			   ncur.OrgUnit6_Code as [HM_L6_Mngr_OrgCode],
+			   ncur.OrgUnit2_Email as [HM_L2_Mngr_Email],
+			   ncur.OrgUnit3_Email as [HM_L3_Mngr_Email],
+			   ncur.OrgUnit4_Email as [HM_L4_Mngr_Email],
+			   ncur.OrgUnit5_Email as [HM_L5_Mngr_Email],
+			   ncur.OrgUnit6_Email as [HM_L6_Mngr_Email],
+			   pos.MIGRATIONID
+		FROM [BIC_GoldSource].[dbo].[V_WDR_PIT] cur
+		LEFT JOIN [ADM_WMA].[dbo].[V_WMA2_Request] wma2 ON cur.wma_id = wma2.req_xid
+		LEFT JOIN #timetracking tt ON cur.Employee_ID = tt.Employee and cur.Client_Project_Name = tt.[Client Name] and tt.Rno = 1
+		LEFT JOIN DM_Refmaster.dbo.T_Map_Special_Project spc on cur.Requisition_Number = spc.ID and spc.System = 'WDR'
+		LEFT JOIN [ADM_WMA].[dbo].V_WMA2_Request_Position wma on wma2.req_id = wma.req_id
+		LEFT JOIN DM_PPMC.dbo.T_positions pos on cur.Demand_ID = convert(varchar,pos.POSITION_ID)
+		LEFT JOIN DM_Globalstaff.dbo.V_Worker_dxc_cur_NonSensitive cur_non on cur.Employee_ID = cur_non.Employee_ID
+		LEFT JOIN DM_Globalstaff.dbo.V_Worker_dxc_cur_NonSensitive ncur on cur.Hiring_Manager_EID = try_Cast(ncur.[Employee_ID] as int) 
+		WHERE cur.pit_date >= DATEADD(day, -30, @l_max_pit_date_d)
+			  AND [Req_Posting] != ''
+	    GROUP BY	cur.[Report_Date],
+			   cur.[pit_date],
+			   cur.[is_weekly],
+			   cur.[is_monthly],
+			   cur.[Requisition_Number],
+			   cur.[Demand_ID],
+			   cur.[Req_Offer_Status],
+			   cur.[Requisition_Title],
+			   cur.[Job_Profile],
+			   cur.[Requisition_Status],
+			   cur.[Req_Posting],
+			   cur.[Region],
+			   cur.[Country],
+			   cur.[State_Province],
+			   cur.[City],
+			   cur.[Secondary_Locations],
+			   cur.[Business_Group_L1],
+			   cur.[Business_Unit_L2],
+			   cur.[Business_L3_OrgUnit],
+			   cur.[Business_L4_MRU],
+			   cur.[Cost_Center],
+			   cur.[SCS_Code],
+			   cur.[Position_Cost_Center],
+			   cur.[Position_Cost_Center_Name],
+			   cur.[Company_Name],
+			   cur.[Company_ID],
+			   cur.[Job_Code],
+			   cur.[Job_Family_Group],
+			   cur.[Job_Family],
+			   cur.[Management_Level],
+			   cur.[Job_Grade],
+			   cur.[Reason_Position_Needed],
+			   cur.[Replaced_Worker_EID],
+			   cur.[Replaced_Worker_Name],
+			   cur.[Position_ID],
+			   cur.[Position_Status],
+			   cur.[Position_Worker_Type],
+			   cur.[Worker_Sub_Type_Hiring_Requirement],
+			   cur.[Overtime_Status],
+			   cur.[Primary_Recruiter_Name],
+			   cur.[Recruiter_EID],
+			   cur.[Recruiter_Email],
+			   cur.[Hiring_Manager],
+			   cur.[Hiring_Manager_EID],
+			   cur.[Hiring_Manager_Email],
+			   cur.[Hiring_Manager_Supervisor_Name],
+			   cur.[HM_L1_Mngr_Name],
+			   cur.[HM_L2_Mngr_Name],
+			   cur.[HM_L3_Mngr_Name],
+			   cur.[HM_L4_Mngr_Name],
+			   cur.[HM_L5_Mngr_Name],
+			   cur.[HM_L6_Mngr_Name],
+			   cur.[Req_Creation_Date],
+			   cur.[Req_Approved_Date],
+			   cur.[Req_Posting_Date],
+			   cur.[Req_Latest_Reactivation_Date],
+			   cur.[Target_Start_Date],
+			   cur.[Days_Job_Req_Open_by_Date_Req_Entered],
+			   cur.[First_Sourced_Date],
+			   cur.[Days_Job_Req_Open_by_Recruiting_Start_Date],
+			   cur.[On_Hold_Date],
+			   cur.[On_Hold_Days],
+			   cur.[Days_Job_Req_Open_by_Req_Completed_Date],
+			   cur.[Referral_Payment_Plan_Job_Req],
+			   cur.[Number_Openings_Total],
+			   cur.[Number_Openings_Left_to_Fill],
+			   cur.[Number_External_Candidates],
+			   cur.[Number_Internal_Candidates],
+			   cur.[Number_Candidates_Matched],
+			   cur.[Number_Candidates_Shortlisted],
+			   cur.[Number_Candidates_Interviewed],
+			   cur.[Number_Candidates_Offered],
+			   cur.[Number_Candidates_Accepted],
+			   cur.[Number_External_Candidates_ALL],
+			   cur.[Number_Internal_Candidates_ALL],
+			   cur.[Number_Candidates_Matched_ALL],
+			   cur.[Number_Candidates_Shortlisted_ALL],
+			   cur.[Number_Candidates_Interviewed_ALL],
+			   cur.[Number_Candidates_Offered_ALL],
+			   cur.[Number_Candidates_Accepted_ALL],
+			   cur.[Number_Candidates_Declined_Rejected_ALL],
+			   cur.[Latest_Filled_Date],
+			   cur.[Labor_Category],
+			   cur.[reasonDetail],
+			   cur.[Latest_Cancellation_Date],
+			   cur.[Recruiter_Type],
+			   cur.[Employee_ID],
+			   cur.[Rev_Region_L1],
+			   cur.[Rev_Region_L2],
+			   cur.[Rev_Region_L3],
+			   cur.[BSDHI_L1],
+			   cur.[BSDHI_L2],
+			   cur.[BSDHI_L3],
+			   cur.[wma_id],
+			   cur.[Last_Name],
+			   cur.[First_Name],
+			   cur.[Wrkr_Hire_Date],
+			   cur.[HML],
+			   cur.[Age],
+			   cur.[Age Group],
+			   cur.[eidToken],
+			   cur.[Candidate_ID],
+			   cur.[Billable_NonBillable],
+			   cur.[req_Job_Type],
+			   cur.[Target_Hire_Date_Proposed],
+			   cur.[Revised_Target_Hire_Date_Proposed],
+			   cur.[Req_Legacy_Company],
+			   cur.[job_level],
+			   cur.[Client_Project_Name],
+			   cur.[Official_Account_Name],
+			   cur.[offering],
+			   cur.[SubOffering],
+			   cur.[Digital/Non Digital (McKinsey Mapping)],
+			   cur.[Industry],
+			   cur.[country_cd],
+			   cur.[Candidate_Is_Internal],
+			   cur.[Submission_Is_Internal],
+			   cur.[Source],
+			   cur.[Job_Application_Source],
+			   cur.[Candidate_Source],
+			   cur.[Referred_by],
+			   cur.[Screen_Date],
+			   cur.[Hiring_Manager_Submittal_Date],
+			   cur.[Interview_Date],
+			   cur.[Offer_Approval_Date],
+			   cur.[Offer_Extended_date],
+			   cur.[Offer_Accepted_Date],
+			   cur.[Latest_Offer_Accepted],
+			   cur.[Latest_Offer_Extended],
+			   cur.[Inbound_Staffing_Process_Completed],
+			   cur.[latest_Internal_job_posting_Start_date],
+			   cur.[latest_Internal_job_posting_End_date],
+			   cur.[latest_External_job_posting_Start_date],
+			   cur.[latest_External_job_posting_End_date],
+			   wma2.[req_status],
+			   tt.[Client ID],
+			   tt.[Client Name],
+			   cur.[Country Group],
+			   spc.[Special Project],
+			   wma.req_position_reason,
+			   pos.POSITION_STATUS,
+			   cur_non.Employee_Status,
+			   ncur.OrgUnit2_Code,
+			   ncur.OrgUnit3_Code,
+			   ncur.OrgUnit4_Code,
+			   ncur.OrgUnit5_Code,
+			   ncur.OrgUnit6_Code,
+			   ncur.OrgUnit2_Email,
+			   ncur.OrgUnit3_Email,
+			   ncur.OrgUnit4_Email,
+			   ncur.OrgUnit5_Email,
+			   ncur.OrgUnit6_Email,
+			   pos.MIGRATIONID
+
+	IF @mode = 2
+
+		SELECT cur.[pit_date]
+			  ,cur.[Report_Date]
+			  ,cur.[Requisition_Number]
+			  ,cur.[Demand_ID]
+			  ,cur.[Req_Offer_Status]
+			  ,cur.[Requisition_Title]
+			  ,cur.[Job_Profile]
+			  ,cur.[Requisition_Status]
+			  ,cur.[Req_Posting]
+			  ,cur.[Region]
+			  ,cur.[Country]
+			  ,cur.[State_Province]
+			  ,cur.[City]
+			  ,cur.[Secondary_Locations]
+			  ,cur.[Business_Group_L1]
+			  ,cur.[Business_Unit_L2]
+			  ,cur.[Business_L3_OrgUnit]
+			  ,cur.[Business_L4_MRU]
+			  ,cur.[Cost_Center]
+			  ,cur.[SCS_Code]
+			  ,cur.[Position_Cost_Center]
+			  ,cur.[Position_Cost_Center_Name]
+			  ,cur.[Company_Name]
+			  ,cur.[Company_ID]
+			  ,cur.[Job_Code]
+			  ,cur.[Job_Family_Group]
+			  ,cur.[Job_Family]
+			  ,cur.[Management_Level]
+			  ,cur.[Job_Grade]
+			  ,cur.[Reason_Position_Needed]
+			  ,cur.[Replaced_Worker_EID]
+			  ,cur.[Replaced_Worker_Name]
+			  ,cur.[Position_ID]
+			  ,cur.[Position_Status]
+			  ,cur.[Position_Worker_Type]
+			  ,cur.[Worker_Sub_Type_Hiring_Requirement]
+			  ,cur.[Overtime_Status]
+			  ,cur.[Primary_Recruiter_Name]
+			  ,cur.[Recruiter_EID]
+			  ,cur.[Recruiter_Email]
+			  ,cur.[Hiring_Manager]
+			  ,cur.[Hiring_Manager_EID]
+			  ,cur.[Hiring_Manager_Email]
+			  ,cur.[Hiring_Manager_Supervisor_Name]
+			  ,cur.[HM_L1_Mngr_Name]
+			  ,cur.[HM_L2_Mngr_Name]
+			  ,cur.[HM_L3_Mngr_Name]
+			  ,cur.[HM_L4_Mngr_Name]
+			  ,cur.[HM_L5_Mngr_Name]
+			  ,cur.[HM_L6_Mngr_Name]
+			  ,cur.[Req_Creation_Date]
+			  ,cur.[Req_Approved_Date]
+			  ,cur.[Req_Posting_Date]
+			  ,cur.[Req_Latest_Reactivation_Date]
+			  ,cur.[Target_Start_Date]
+			  ,cur.[Days_Job_Req_Open_by_Date_Req_Entered]
+			  ,cur.[First_Sourced_Date]
+			  ,cur.[Days_Job_Req_Open_by_Recruiting_Start_Date]
+			  ,cur.[On_Hold_Date]
+			  ,cur.[On_Hold_Days]
+			  ,cur.[Days_Job_Req_Open_by_Req_Completed_Date]
+			  ,cur.[Referral_Payment_Plan_Job_Req]
+			  ,cur.[Number_Openings_Total]
+			  ,cur.[Number_Openings_Left_to_Fill]
+			  ,cur.[Number_External_Candidates]
+			  ,cur.[Number_Internal_Candidates]
+			  ,cur.[Number_Candidates_Matched]
+			  ,cur.[Number_Candidates_Shortlisted]
+			  ,cur.[Number_Candidates_Interviewed]
+			  ,cur.[Number_Candidates_Offered]
+			  ,cur.[Number_Candidates_Accepted]
+			  ,cur.[Number_External_Candidates_ALL]
+			  ,cur.[Number_Internal_Candidates_ALL]
+			  ,cur.[Number_Candidates_Matched_ALL]
+			  ,cur.[Number_Candidates_Shortlisted_ALL]
+			  ,cur.[Number_Candidates_Interviewed_ALL]
+			  ,cur.[Number_Candidates_Offered_ALL]
+			  ,cur.[Number_Candidates_Accepted_ALL]
+			  ,cur.[Number_Candidates_Declined_Rejected_ALL]
+			  ,cur.[Latest_Filled_Date]
+			  ,cur.[Labor_Category]
+			  ,cur.[reasonDetail]
+			  ,cur.[Latest_Cancellation_Date]
+			  ,cur.[Recruiter_Type]
+			  ,cur.[Employee_ID]
+			  ,cur.[Rev_Region_L1]
+			  ,cur.[Rev_Region_L2]
+			  ,cur.[Rev_Region_L3]
+			  ,cur.[BSDHI_L1]
+			  ,cur.[BSDHI_L2]
+			  ,cur.[BSDHI_L3]
+			  ,cur.[wma_id],wma2.req_status
+			  ,cur.[Last_Name] ,cur.[First_Name]
+			  ,cur.[Wrkr_Hire_Date]
+			  ,cur.[HML]
+			  ,cur.[Age]
+			  ,cur.[Age Group]
+			  ,cur.[eidToken]
+			  ,cur.[Candidate_ID]
+			  ,cur.[Billable_NonBillable]
+			  ,cur.[req_Job_Type]
+			  ,cur.[Target_Hire_Date_Proposed]      
+			  ,cur.[Revised_Target_Hire_Date_Proposed]
+			  ,cur.[Req_Legacy_Company]
+			  ,cur.[job_level]
+			  ,cur.[Client_Project_Name]
+			  ,cur.[Official_Account_Name]
+			  ,cur.[offering]
+			  ,cur.[SubOffering]
+			  ,cur.[Digital/Non Digital (McKinsey Mapping)]
+			  ,cur.[Industry]
+			  ,cur.[country_cd]
+			  ,cur.[Candidate_Is_Internal]
+			  ,cur.[Submission_Is_Internal]
+			  ,cur.[Source]
+			  ,cur.[Job_Application_Source]
+			  ,cur.[Candidate_Source]
+			  ,cur.[Referred_by]
+			  ,cur.[Screen_Date]
+			  ,cur.[Hiring_Manager_Submittal_Date]
+			  ,cur.[Interview_Date]
+			  ,cur.[Offer_Approval_Date]
+			  ,cur.[Offer_Extended_date]
+			  ,cur.[Offer_Accepted_Date]
+			  ,cur.[Latest_Offer_Accepted]
+			  ,cur.[Latest_Offer_Extended]
+			  ,CASE WHEN cur_non.Employee_Status = 'Terminated' THEN '[masked]'
+			        ELSE   cur.[Inbound_Staffing_Process_Completed]
+			   END as [Inbound_Staffing_Process_Completed]
+			  ,cur.[latest_Internal_job_posting_Start_date]
+			  ,cur.[latest_Internal_job_posting_End_date]
+			  ,cur.[latest_External_job_posting_Start_date]
+			  ,cur.[latest_External_job_posting_End_date]
+			  ,tt.[Client ID]
+			  ,tt.[Client Name]
+			  ,cur.[Country Group]
+			  ,spc.[Special Project]
+			  ,wma.req_position_reason as [WMA Req Position Reason]
+			  ,pos.POSITION_STATUS as [PPM Position Status]
+			  ,ncur.OrgUnit2_Code as [M_L2_Mngr_OrgCode]
+			  ,ncur.OrgUnit3_Code as [HM_L3_Mngr_OrgCode]
+			  ,ncur.OrgUnit4_Code as [HM_L4_Mngr_OrgCode]
+			  ,ncur.OrgUnit5_Code as [HM_L5_Mngr_OrgCode]
+			  ,ncur.OrgUnit6_Code as [HM_L6_Mngr_OrgCode]
+			  ,ncur.OrgUnit2_Email as [HM_L2_Mngr_Email]
+			  ,ncur.OrgUnit3_Email as [HM_L3_Mngr_Email]
+			  ,ncur.OrgUnit4_Email as [HM_L4_Mngr_Email]
+			  ,ncur.OrgUnit5_Email as [HM_L5_Mngr_Email]
+			  ,ncur.OrgUnit6_Email as [HM_L6_Mngr_Email]
+			  ,pos.MIGRATIONID
+		  FROM [BIC_GoldSource].[dbo].[V_WDR_CUR] cur 
+		  LEFT JOIN [ADM_WMA].[dbo].[V_WMA2_Request] wma2 on cur.wma_id = wma2.req_xid
+		  LEFT JOIN #timetracking tt ON cur.Employee_ID = tt.Employee and cur.Client_Project_Name = tt.[Client Name] and tt.Rno = 1
+		  LEFT JOIN DM_RefMaster.dbo.T_Map_Special_Project spc on cur.Requisition_Number = spc.ID and spc.System = 'WDR'
+		  LEFT JOIN [ADM_WMA].[dbo].V_WMA2_Request_Position wma on wma2.req_id = wma.req_id
+		  LEFT JOIN DM_PPMC.dbo.T_positions pos on cur.Demand_ID = convert(varchar,pos.POSITION_ID)
+		  LEFT JOIN DM_Globalstaff.dbo.V_Worker_dxc_cur_NonSensitive cur_non on cur.Employee_ID = cur_non.Employee_ID
+		  LEFT JOIN DM_Globalstaff.dbo.V_Worker_dxc_cur_NonSensitive ncur on cur.Hiring_Manager_EID = try_Cast(ncur.[Employee_ID] as int) 
+		 where cur.[Req_Posting] != ''
+
+
+END
